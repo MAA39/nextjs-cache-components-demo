@@ -1,10 +1,17 @@
 # Next.js 16 Cache Components / PPR Demo
 
-Next.js 16 の **Cache Components** と **PPR (Partial Pre-rendering)** のデモリポジトリです。
+Next.js 16 (canary) の **Cache Components** と **PPR (Partial Pre-rendering)** のデモリポジトリです。
 
 ## 📌 このプロジェクトについて
 
 Next.js 16 で導入された Cache Components の仕組みを実際に動かして確認するためのデモアプリです。
+
+### 使用技術
+
+- **Next.js**: `canary` (v16 相当)
+- **React**: `rc` (v19 RC)
+- **TypeScript**: v5
+- **Turbopack**: 開発サーバーで有効化
 
 ### 主な特徴
 
@@ -31,12 +38,15 @@ cd nextjs-cache-components-demo
 pnpm install
 \`\`\`
 
+> **注意**: Next.js canary と React RC を使うため、初回インストール時に警告が出る場合がありますが正常です。
+
 ### 3. 開発サーバーの起動
 
 \`\`\`bash
 pnpm dev
 \`\`\`
 
+Turbopack が有効化された状態で起動します。
 ブラウザで [http://localhost:3000](http://localhost:3000) を開いてください。
 
 ## 📂 ファイル構成
@@ -48,9 +58,10 @@ nextjs-cache-components-demo/
 │   │   ├── static-product-list.tsx   # 静的な商品リスト（PPR 対象）
 │   │   └── dynamic-user-info.tsx     # 動的なユーザー情報（Suspense）
 │   ├── layout.tsx                    # ルートレイアウト
-│   └── page.tsx                      # トップページ
+│   ├── page.tsx                      # トップページ
+│   └── globals.css                   # グローバルスタイル
 ├── next.config.ts                    # cacheComponents: true を設定
-├── package.json
+├── package.json                      # Next.js canary 指定
 ├── tsconfig.json
 └── README.md
 \`\`\`
@@ -81,6 +92,13 @@ Cookie 値: user_12345
 
 設定後、ページをリロードすると「ログイン中」の表示に切り替わります。
 
+### 4. ネットワークタブでの確認
+
+開発者ツールの Network タブで以下を確認できます:
+
+- 最初のレスポンスに静的シェル（HTML）が含まれている
+- その後、動的データが追加のチャンクとしてストリーミングされる
+
 ## 📖 コードの解説
 
 ### `app/components/static-product-list.tsx`
@@ -107,10 +125,36 @@ Cookie 値: user_12345
 - [ ] Cookie の有無でユーザー情報の表示が変わるか？
 - [ ] ネットワークタブで静的シェルとストリーミングの分離を確認できるか？
 
+## 💡 重要な設計原則
+
+### ✅ PPR できるもの（静的シェルに含められる）
+
+- 公開データ（誰が見ても同じ）
+- runtime data（cookies, headers, searchParams）を使わないコンポーネント
+- `use cache` でマークされた関数/コンポーネント
+
+### ❌ PPR できないもの（Suspense 必須）
+
+- `cookies()`, `headers()`, `searchParams` を使うコンポーネント
+- ユーザー固有・組織固有のデータ
+- 認証が必要なデータ
+
+### 🔐 セキュリティ上の注意
+
+- `use cache` を付けたコンポーネント/関数は **全ユーザーで共有される**
+- ユーザー固有データを `use cache` に入れると **第三者に漏洩する危険** がある
+- Next.js は runtime data を含むコンポーネントに `use cache` を付けるとエラーを出して防いでくれる
+
 ## 📚 参考資料
 
 - [Next.js 公式ドキュメント: Cache Components](https://nextjs.org/docs/app/getting-started/cache-components)
 - [PPR (Partial Pre-rendering) について](https://nextjs.org/docs/app/getting-started/cache-components#how-it-works)
+- [Next.js Blog: Introducing Next.js 16](https://nextjs.org/blog) (リリース後に確認)
+
+## 🔄 バージョンについて
+
+このプロジェクトは Next.js 16 canary を使用しています。
+正式リリース後は `package.json` を更新して安定版を使用することを推奨します。
 
 ## 📝 ライセンス
 
